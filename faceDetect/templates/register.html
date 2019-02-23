@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>用户注册</title>
+    <style type="text/css">
+        .registerpage {
+            width: 300px;
+            height: auto;
+            border: 1px solid #ccc;
+            background-color:white;
+            border-radius:8px;
+            margin: 150px auto;
+
+        }
+        .title{
+            text-align: center;
+            margin-top: 100px;
+            font-family:"Kartika";
+            color: red;
+            font-size: 80px;
+        }
+    </style>
+</head>
+<body bgcolor="#5e8df8">
+<div class="registerpage">
+    {% if errors %}
+        <li>
+
+            {% for error in errors %}
+             <p style="color: red;">
+                {{error}}
+             </p>
+            {% endfor %}
+        </li>
+{% endif %}
+<table align="center">
+    <form action="" method="post">{% csrf_token %}
+
+        <tr>
+            <td>
+                <label >用户名:</label>
+            </td>
+            <td>
+                <input type = 'text' placeholder="输入用户名" name = 'account'>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label >密码:</label>
+            </td>
+            <td>
+              <input type = 'password' placeholder="输入密码" name = 'password'>
+            </td>
+        </tr>
+         <tr>
+             <td>
+                <label >确认密码:</label>
+             </td>
+             <td>
+                 <input type = 'password' placeholder="再次输入密码" name ='password2'>
+             </td>
+
+         </tr>
+         <tr>
+             <td>
+                 <label>邮箱:</label>
+             </td>
+             <td>
+                 <input type="email" placeholder="输入邮箱" name = 'email'>
+             </td>
+         </tr>
+          <tr>
+
+              <td>
+                   <input type = 'submit' placeholder="Login" value="登录">
+              </td>
+          </tr>
+    </form>
+</table>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>暗通道去雾</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.js"></script>
+    <link rel="stylesheet" type="text/css" class="ui" href="http://www.semantic-ui.cn/dist/semantic.min.css">
+    <script type="text/javascript" src="http://www.semantic-ui.cn/javascript/library/jquery.min.js"></script>
+    <script type="text/javascript" src="http://www.semantic-ui.cn/dist/semantic.min.js"></script>
+    <script type="text/javascript" src="../static/reqwest.js"></script>
+    <script type="text/javascript" src="../static/vue.js"></script>
+    <script type="text/javascript">
+        function ProcessFile(e) {
+            var file = document.getElementById('file').files[0];
+            var self = this;
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    var txt = event.target.result;
+                    //尝试将获取的base64写入缓存
+                    u.setStorage("dehaze_src", txt)
+                    self.src = txt;
+                    //var img = document.createElement("img");
+                    //img.src = txt;//将图片base64字符串赋值给img的src
+                    //console.log(txt);
+                    //document.getElementById("result").appendChild(img);
+                    document.getElementById("pic").src=txt;
+                };
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function contentLoaded() {
+            document.getElementById('file').addEventListener('change',
+                ProcessFile, false);
+        }
+
+        window.addEventListener("DOMContentLoaded", contentLoaded, false);
+        //缓存设置
+        //定义全局变量函数
+        var uzStorage = function () {
+            var ls = window.localStorage;
+            return ls;
+        };
+        //定义全局变量u
+        var u = {};
+        //设置缓存
+        u.setStorage = function (key, value) {
+            var v = value;
+            if (typeof v == 'object') {
+                v = JSON.stringify(v);
+                v = 'obj-' + v;
+            } else {
+                v = 'str-' + v;
+            }
+            var ls = uzStorage();
+            if (ls) {
+                ls.setItem(key, v);
+            }
+        };
+        //获取缓存
+        u.getStorage = function (key) {
+            var ls = uzStorage();
+            if (ls) {
+                var v = ls.getItem(key);
+                if (!v) {
+                    return;
+                }
+                if (v.indexOf('obj-') === 0) {
+                    v = v.slice(4);
+                    return JSON.parse(v);
+                } else if (v.indexOf('str-') === 0) {
+                    return v.slice(4);
+                }
+            }
+        };
+        //接口请求
+        /*$.ajax({
+            url: 'https://api-cn.faceplusplus.com/facepp/v3/detect?api_key=deQI3zInZt_NbZYtFW6Pe8UzvYe8P-pf&api_secret=xYmv45t2Dvj5YHd9uwQrIOnFKPyG1-Bn&return_attributes=gender,age,facequality&image_base64='+this.src,
+            type: "post",   //请求方式是post
+            dataType: "json", //数据类型是json型
+            success: function (data) {
+                console.log(data);//可以在控制台查看打印的data值
+            }
+        })*/
+
+    </script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+    <style>
+        .slider-box {
+            background: cadetblue;
+            font-family: Microsoft Yahei;
+            padding-bottom: 10px;
+            width: 900px;
+        }
+
+        .slider-box .item {
+            padding: 10px
+        }
+
+        .slider-box .item .tag, .slider-box .item .slider, .slider-box .item .val {
+            float: left;
+            margin-right: 18px
+        }
+
+        .slider-box .item .slider {
+            width: 400px
+        }
+
+        .slider-box .item .slider div {
+            background: #8FBF0B;
+            border: none;
+            height: 0.5em;
+            margin-top: 0.5em
+        }
+
+        .slider-box .item .slider div .ui-slider-handle {
+            background: #F4F3F1;
+            width: 1em;
+            height: 1em;
+            border-radius: 1em
+        }
+
+        .slider-box .item .val input {
+            border: none;
+            border-bottom: 1px solid #ABADA8;
+            background: none;
+            padding: 0.1em 1em;
+            color: #E4531C;
+            font-weight: bold;
+            font-size: 1em;
+            width: 5em;
+            text-align: center
+        }
+
+        .clr {
+            clear: both
+        }
+    </style>
+    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <style type="text/css">
+        .button {
+            text-align: center;
+            margin-top: 50px;
+        }
+        img{
+             max-width:100%;
+             max-height:100%;
+        }
+        .image{
+            height: 300px;
+            width: 450px;
+        }
+    </style>
+</head>
+
+<body >
+<div id="app">
+    <div class="ui inverted vertical masthead center aligned segment" style="height: 100%;width: 100%;position: absolute;">
+
+        <div class="ui container">
+            <div class="ui large secondary inverted pointing menu">
+                <a class="item" href="/detect">样貌检测</a>
+                <a class="active item" href="/dehaze">图像去雾</a>
+                <a class="item">图像识别</a>
+                <a class="item">图像检测</a>
+                <div class="right item">
+                    <a class="ui inverted button" href="/logout">退出登录</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui text container">
+            <h1 class="ui inverted header">
+                Now,please choose your picture .
+            </h1>
+            <div>
+                <label>
+                    <img src="/static/images/jahao.jpg" style="width: 30px;height: 30px;" @click="choosePic" id="choose_pic">
+                    <input type="file" id="file" style="display: none" name="file" />
+                </label>
+            </div>
+
+            <button class="ui button" v-on:click="dehaze">开始去雾</button>
+        </div>
+        <div class="slider-box">
+            <div class="item">
+                <div class="tag">滤波器半径：</div>
+                <div class="slider">
+                    <div id="days"></div>
+                </div>
+                <div class="val"><input value="7" name="days" /></div>
+            </div>
+            <div class="clr"></div>
+        </div>
+        <h4 class="ui horizontal divider header" > 暗通道去雾 </h4>
+        <div class="column">
+                <table class="ui celled selectable right aligned table" style="margin:0 auto;width: 900px;">
+                    <thead>
+                    <tr>
+                        <th class="left aligned">去雾前</th>
+                        <th>去雾后</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="right aligned">
+                            <div class="image">
+                                <img id="pic"/>
+                            </div>
+                        </td>
+                        <td class="left aligned" >
+                            <div class="image" >
+                                <img id="dehaze_pic_64" v-show="dehaze_pic_show"/>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        <div class="column" v-show="paramShow">
+            <table class="ui selectable inverted table">
+                <thead>
+                <tr>
+                    <th>  指标/参数(r)</th>
+                    <th v-for="item in picData.r" >
+                        {% verbatim %}{{ item }}{% endverbatim %}
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td v-for="item in picData.psnr">
+                        {% verbatim %}{{ item }}{% endverbatim %}
+                    </td>
+                </tr>
+                <tr>
+                    <td v-for="item in picData.mssim">
+                        {% verbatim %}{{ item }}{% endverbatim %}
+                    </td>
+                </tr>
+                <tr>
+                    <td v-for="item in picData.processTime">
+                        {% verbatim %}{{ item }}{% endverbatim %}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#choose_pic").click(function(){
+            vm.dehaze_pic_show = false;
+        });
+
+        $("#days").slider({
+            min: 0,
+            max: 20,
+            value: $('input[name="days"]').val(),
+            slide: function (event, ui) {
+                $('input[name="days"]').val(ui.value)
+            }
+        });
+    });
+    var vm = new Vue({
+        el: '#app',
+
+        data: {
+            pic:"",
+            ok:false,
+            paramShow:false,
+            dehaze_pic:"",
+            result:false, //{% verbatim %}{{ message }}{% endverbatim %}
+            dehaze_pic_show:false,
+            testdata:"",
+            picData:{
+                psnr:["PSNR"],
+                mssim:["MSSIM"],
+                processTime:["运行时间"],
+                r:[],
+                gaosi_filter_radius:"",
+            },
+
+        },
+
+        //定义触发函数
+        methods: {
+            choosePic:function(){
+                this.result = false;
+            },
+            dehaze: function () {
+                this.ok=true;
+                this.paramShow=true;
+                var that = this;
+                var pic = u.getStorage("dehaze_src");
+                var pic_baes64 = pic.slice(pic.indexOf(",")+1);
+                //alert(pic_baes64);
+                //console.log(src);
+                /*$.ajax({
+                    type: "POST",
+                    data: {
+                        "img": pic_baes64,
+                    },
+                    url: "http://127.0.0.1:8000/api/apitest/",
+
+
+                    success: function (data) {
+                        //window.alert(data.msg);
+                        that.dehaze_pic_show = true;
+                        this.dehaze_pic = "data:image/jpeg;base64,"+data.data.dehaze_img_64;
+                        var pic = document.getElementById("dehaze_pic_64");
+                        pic.src = this.dehaze_pic;
+                        this.picData.psnr = data.data.psnr;
+
+
+                    },
+                    error: function(){
+                        window.alert("数据返回失败！");
+                    }
+                })*/
+
+                reqwest({
+                            url:'http://127.0.0.1:9000/api/apitest/',
+                            type:'json',
+                            method:"post",
+
+                            data: {
+                                "img": pic_baes64,
+                                "r":$('input[name="days"]').val(),
+                            },
+                            success: function (resp) {
+                                console.log("去雾接口返回数据成功");
+                                that.dehaze_pic_show = true;
+                                this.dehaze_pic = "data:image/jpeg;base64," + resp.data.dehaze_img_64;
+                                var pic = document.getElementById("dehaze_pic_64");
+                                pic.src = this.dehaze_pic;
+                                that.picData.psnr.push(resp.data.psnr);
+                                that.picData.mssim.push(resp.data.mssim);
+                                that.picData.processTime.push(resp.data.processTime);
+                                that.picData.r.push(resp.data.r);
+                            },
+                        })
+
+            },
+
+
+        }
+    });
+</script>
+</body>
+</html>

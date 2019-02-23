@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>样貌检测</title>
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.js"></script>
+    <link rel="stylesheet" type="text/css" class="ui" href="http://www.semantic-ui.cn/dist/semantic.min.css">
+    <script type="text/javascript" src="http://www.semantic-ui.cn/javascript/library/jquery.min.js"></script>
+    <script type="text/javascript" src="http://www.semantic-ui.cn/dist/semantic.min.js"></script>
+
+    <script type="text/javascript">
+        function ProcessFile(e) {
+            var file = document.getElementById('file').files[0];
+            var self = this;
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function (event) {
+                    var txt = event.target.result;
+                    //尝试将获取的base64写入缓存
+                    u.setStorage("src", txt)
+                    self.src = txt;
+                    //var img = document.createElement("img");
+                    //img.src = txt;//将图片base64字符串赋值给img的src
+                    //console.log(txt);
+                    //document.getElementById("result").appendChild(img);
+                    document.getElementById("pic").src=txt;
+                };
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function contentLoaded() {
+            document.getElementById('file').addEventListener('change',
+                ProcessFile, false);
+        }
+
+        window.addEventListener("DOMContentLoaded", contentLoaded, false);
+        //缓存设置
+        //定义全局变量函数
+        var uzStorage = function () {
+            var ls = window.localStorage;
+            return ls;
+        };
+        //定义全局变量u
+        var u = {};
+        //设置缓存
+        u.setStorage = function (key, value) {
+            var v = value;
+            if (typeof v == 'object') {
+                v = JSON.stringify(v);
+                v = 'obj-' + v;
+            } else {
+                v = 'str-' + v;
+            }
+            var ls = uzStorage();
+            if (ls) {
+                ls.setItem(key, v);
+            }
+        };
+        //获取缓存
+        u.getStorage = function (key) {
+            var ls = uzStorage();
+            if (ls) {
+                var v = ls.getItem(key);
+                if (!v) {
+                    return;
+                }
+                if (v.indexOf('obj-') === 0) {
+                    v = v.slice(4);
+                    return JSON.parse(v);
+                } else if (v.indexOf('str-') === 0) {
+                    return v.slice(4);
+                }
+            }
+        };
+        //接口请求
+        /*$.ajax({
+            url: 'https://api-cn.faceplusplus.com/facepp/v3/detect?api_key=deQI3zInZt_NbZYtFW6Pe8UzvYe8P-pf&api_secret=xYmv45t2Dvj5YHd9uwQrIOnFKPyG1-Bn&return_attributes=gender,age,facequality&image_base64='+this.src,
+            type: "post",   //请求方式是post
+            dataType: "json", //数据类型是json型
+            success: function (data) {
+                console.log(data);//可以在控制台查看打印的data值
+            }
+        })*/
+
+    </script>
+    <style type="text/css">
+        .button {
+            text-align: center;
+            margin-top: 50px;
+        }
+        img{
+             width:auto;
+             height:auto;
+             max-width:100%;
+             max-height:100%;
+        }
+        #result{
+
+        }
+    </style>
+</head>
+<body >
+<div class="ui middle aligned center aligned grid">
+    <div class="column">
+        <h2 class="ui teal image header">
+            <img src="assets/images/logo.png" class="image">
+            <div class="content">
+                登录到账号
+            </div>
+        </h2>
+        <form class="ui large form">
+            <div class="ui stacked segment">
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="user icon"></i>
+                        <input type="text" name="email" placeholder="邮箱地址">
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="ui left icon input">
+                        <i class="lock icon"></i>
+                        <input type="password" name="password" placeholder="密码">
+                    </div>
+                </div>
+                <div class="ui fluid large teal submit button">登录</div>
+            </div>
+
+            <div class="ui error message"></div>
+
+        </form>
+
+        <div class="ui message">
+            新用户？ <a href="login.php#">注册</a>
+        </div>
+    </div>
+</div>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            pic:"",
+            result:false, //{% verbatim %}{{ message }}{% endverbatim %}
+            faceData:{
+                gender:"",
+                age:"",
+                facequality:"",
+                emotion:"",
+                female_score:"",
+                male_score:"",
+                health:"",
+                wish:"",
+            },
+
+        },
+        watch: {
+            pic: function (val) {
+                this.result = false;
+
+            },
+        },
+        //定义触发函数
+        methods: {
+            choosePic:function(){
+                that.result = false;
+            },
+            detect: function () {
+                this.ok=true;
+                var that = this;
+                this.src = u.getStorage("src");
+                console.log("---------------------------------");
+                //console.log(src);
+                $.ajax({
+                    type: "POST",
+                    data: {
+                        "api_key": "deQI3zInZt_NbZYtFW6Pe8UzvYe8P-pf",
+                        "api_secret": "xYmv45t2Dvj5YHd9uwQrIOnFKPyG1-Bn",
+                        "return_attributes": "gender,age,facequality,smiling,emotion,beauty,skinstatus",
+                        "image_base64": that.src,
+                    },
+                    url: "https://api-cn.faceplusplus.com/facepp/v3/detect",
+                    success: function (data) {
+                        that.result = true;
+                        if(data.faces[0].attributes.gender.value == "Female"){
+                            that.faceData.gender = "女性"
+                        }else{
+                            that.faceData.gender = "男性"
+                        }
+
+                        var maxScore = 0;
+                        var wishes = ["请继续保持哦！","需要注意护肤哦！"];
+                        var emotions = {"sadness":"有点伤心","neutral":"很自然","disgust":"有点恶心","anger":"有点生气","surprise":"有点惊讶","fear":"有点害怕","happiness":"有点高兴",};
+                        var emotion;
+                        for (var key in data.faces[0].attributes.emotion) {
+                            //console.log(key);
+                            //console.log(data.faces[0].attributes.emotion[key]);
+                            if(data.faces[0].attributes.emotion[key]>maxScore){
+                                maxScore=data.faces[0].attributes.emotion[key];
+                                emotion=key;
+                            }
+                        }
+                        if (data.faces[0].attributes.skinstatus.health<60){
+                             that.faceData.wish = wishes[1]
+                        }else{
+                            that.faceData.wish = wishes[0]
+                        }
+                        //console.log(emotion);
+                        that.faceData.emotion = emotions[emotion];
+                        that.faceData.health = data.faces[0].attributes.skinstatus.health;
+                        that.faceData.age = data.faces[0].attributes.age.value;
+                        that.faceData.female_score = data.faces[0].attributes.beauty.female_score;
+                        that.faceData.male_score = data.faces[0].attributes.beauty.male_score;
+
+                    }
+                })
+            },
+            api_test:function () {
+                var self=this;
+                $.ajax({
+                    type: "POST",
+                    data: {
+                        key:'123'
+                    },
+                    url: "https://localhost:8000/api/apitest",
+                    success: function (data) {
+                       self.api_test=data.msg;
+                    }
+                })
+            }
+
+        }
+    })
+</script>
+</body>
+</html>
